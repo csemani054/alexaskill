@@ -1,0 +1,180 @@
+{
+    "interactionModel": {
+        "languageModel": {
+            "invocationName": "provider search",
+            "intents": [
+                {
+                    "name": "AMAZON.CancelIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.HelpIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.StopIntent",
+                    "samples": [
+                        "close",
+                        "stop",
+                        "thank you",
+                        "thanks",
+                        "bye"
+                    ]
+                },
+                {
+                    "name": "GetProviderSearchIntent",
+                    "slots": [],
+                    "samples": [
+                        "find nearby provider",
+                        "locate nearby provider",
+                        "provider",
+                        "search for provider"
+                    ]
+                },
+                {
+                    "name": "GetProviderPhyIntent",
+                    "slots": [],
+                    "samples": [
+                        "practitioner",
+                        "medical practitioner",
+                        "general physician",
+                        "doctor",
+                        "get me a practitioner",
+                        "get me a physician",
+                        "get me a doctor",
+                        "search for doctors",
+                        "search for practitioners",
+                        "search for physicians",
+                        "find nearby physicians",
+                        "find nearby practitioners",
+                        "find nearby doctors",
+                        "locate nearby doctors",
+                        "locate nearby physicians",
+                        "locate nearby practitioners"
+                    ]
+                },
+                {
+                    "name": "GetProviderHospitalIntent",
+                    "slots": [],
+                    "samples": [
+                        "hospital",
+                        "search for hospitals",
+                        "find nearby hospital",
+                        "locate nearby hospital"
+                    ]
+                },
+                {
+                    "name": "GetProviderClinicIntent",
+                    "slots": [],
+                    "samples": [
+                        "clinic",
+                        "search for clinics",
+                        "find nearby clinics",
+                        "locate nearby clinics"
+                    ]
+                },
+                {
+                    "name": "GetAppointementStatusIntent",
+                    "slots": [],
+                    "samples": [
+                        "tell me about my appointment status",
+                        "what is the status of my appointment",
+                        "status of my last appointment",
+                        "appointment status"
+                    ]
+                },
+                {
+                    "name": "DecideAddressIntent",
+                    "slots": [
+                        {
+                            "name": "addressDeciderSlot",
+                            "type": "ADDRESS_DECIDER",
+                            "samples": [
+                                "nope",
+                                "want to search for other address",
+                                "use device address",
+                                "use other address",
+                                "device address",
+                                "other address",
+                                "yeah",
+                                "yep",
+                                "no",
+                                "yes"
+                            ]
+                        }
+                    ],
+                    "samples": [
+                        "{addressDeciderSlot}"
+                    ]
+                }
+            ],
+            "types": [
+                {
+                    "name": "ADDRESS_DECIDER",
+                    "values": [
+                        {
+                            "id": "NO",
+                            "name": {
+                                "value": "NO",
+                                "synonyms": [
+                                    "dont use device address",
+                                    "i want to search for a manual address",
+                                    "feed manual address",
+                                    "other address",
+                                    "alternate address",
+                                    "need to search by alternate address",
+                                    "nope"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "YES",
+                            "name": {
+                                "value": "YES",
+                                "synonyms": [
+                                    "continue with device address",
+                                    "proceed with default address",
+                                    "device address",
+                                    "yes please",
+                                    "yeah",
+                                    "yep"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        "dialog": {
+            "intents": [
+                {
+                    "name": "DecideAddressIntent",
+                    "confirmationRequired": false,
+                    "prompts": {},
+                    "slots": [
+                        {
+                            "name": "addressDeciderSlot",
+                            "type": "ADDRESS_DECIDER",
+                            "confirmationRequired": false,
+                            "elicitationRequired": true,
+                            "prompts": {
+                                "elicitation": "Elicit.Slot.995246435150.1166679865347"
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        "prompts": [
+            {
+                "id": "Elicit.Slot.995246435150.1166679865347",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "Shall i continue with device address?"
+                    }
+                ]
+            }
+        ]
+    }
+}

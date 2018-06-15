@@ -1,0 +1,48 @@
+GetProviderSearchIntent search for provider
+GetProviderSearchIntent provider
+GetProviderSearchIntent locate nearby provider
+GetProviderSearchIntent find nearby provider
+
+
+GetProviderPhyIntent locate nearby practitioners
+GetProviderPhyIntent locate nearby physicians
+GetProviderPhyIntent locate nearby doctors
+GetProviderPhyIntent find nearby doctors
+GetProviderPhyIntent find nearby practitioners
+GetProviderPhyIntent find nearby physicians
+GetProviderPhyIntent search for physicians
+GetProviderPhyIntent search for practitioners
+GetProviderPhyIntent search for doctors
+GetProviderPhyIntent get me a doctor
+GetProviderPhyIntent get me a physician
+GetProviderPhyIntent get me a practitioner
+GetProviderPhyIntent doctor
+GetProviderPhyIntent general physician
+GetProviderPhyIntent medical practitioner
+GetProviderPhyIntent practitioner
+
+GetProviderHospitalIntent locate nearby hospital
+GetProviderHospitalIntent find nearby hospital
+GetProviderHospitalIntent search for hospitals
+GetProviderHospitalIntent hospital
+
+GetProviderClinicIntent locate nearby clinics
+GetProviderClinicIntent find nearby clinics
+GetProviderClinicIntent search for clinics
+GetProviderClinicIntent clinic
+
+GetAppointementStatusIntent appointment status
+GetAppointementStatusIntent status of my last appointment
+GetAppointementStatusIntent what is the status of my appointment
+GetAppointementStatusIntent tell me about my appointment status
+
+DecideAddressIntent {addressDeciderSlot}
+
+AMAZON.StopIntent bye
+AMAZON.StopIntent thanks
+AMAZON.StopIntent thank you
+AMAZON.StopIntent stop
+AMAZON.StopIntent close
+
+AMAZON.CancelIntent cancel
+AMAZON.CancelIntent I am done
