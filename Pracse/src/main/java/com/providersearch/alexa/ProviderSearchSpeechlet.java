@@ -1,7 +1,10 @@
 package com.providersearch.alexa;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -12,13 +15,17 @@ import com.amazon.speech.slu.Intent;
 import com.amazon.speech.slu.Slot;
 import com.amazon.speech.slu.entityresolution.Resolution;
 import com.amazon.speech.speechlet.Context;
+import com.amazon.speech.speechlet.Directive;
 import com.amazon.speech.speechlet.IntentRequest;
+import com.amazon.speech.speechlet.IntentRequest.DialogState;
 import com.amazon.speech.speechlet.LaunchRequest;
 import com.amazon.speech.speechlet.Permissions;
 import com.amazon.speech.speechlet.Session;
 import com.amazon.speech.speechlet.SessionEndedRequest;
 import com.amazon.speech.speechlet.SessionStartedRequest;
 import com.amazon.speech.speechlet.SpeechletV2;
+import com.amazon.speech.speechlet.dialog.directives.DelegateDirective;
+import com.amazon.speech.speechlet.dialog.directives.DialogIntent;
 import com.amazon.speech.speechlet.SpeechletResponse;
 import com.amazon.speech.speechlet.interfaces.system.SystemInterface;
 import com.amazon.speech.speechlet.interfaces.system.SystemState;
@@ -27,6 +34,7 @@ import com.amazon.speech.ui.OutputSpeech;
 import com.amazon.speech.ui.PlainTextOutputSpeech;
 import com.amazon.speech.ui.Reprompt;
 import com.amazon.speech.ui.SimpleCard;
+import com.amazon.speech.ui.SsmlOutputSpeech;
 import com.providersearch.alexa.exceptions.DeviceAddressClientException;
 import com.providersearch.alexa.exceptions.UnauthorizedException;
 import com.providersearch.alexa.Address;
@@ -36,16 +44,64 @@ public class ProviderSearchSpeechlet implements SpeechletV2 {
 
 	private static final Logger log = LoggerFactory.getLogger(ProviderSearchSpeechlet.class);
 	
-	/**
-     * This is the default title that this skill will be using for cards.
+    /**
+     * Check whether the call is from Provider Search Generic Intent or Specific Provider Intent
+     */
+    private static final String GENERIC_INTENT_FLAG = "genericIntentFlag";
+    
+    /**
+     * Slots which gets User Inputs
+     */
+    private static final String PROVIDER_TYPE_SLOT = "providerType";
+    private static final String ADDRESS_DECIDER_SLOT = "addressDecider";
+    private static final String PINCODE_SLOT = "manualPincode";
+    private static final String MILES_VALUE_SLOT = "milesValue";
+    private static final String TRICARE_PLAN_SLOT = "tricarePlan";
+    private static final String GENDER_TYPE_SLOT = "genderType";
+    private static final String SPECIALITY_TYPE_SLOT = "specialityType";
+    private static final String FIRSTNAME_SLOT = "firstName";
+    
+    
+    /**
+     * Generic Message Strings
+     */
+    private static final String GENERIC_INTENT_MAPPING_ERROR = "Your speech response ended with a wrong request. Kindly give a proper response next time, thanks.";
+    private static final String GENERIC_INTENT_NOT_FOUND_ERROR = "Requested response not found, Still I am learning with the new things, Please try again.";
+    private static final String PROVIDER_DETAILS_YESNO_QUES = "PROVIDER_DETAILS_YESNO_QUES";
+    private static final String MANUAL_ADDRESS = "MANUAL_ADDRESS";
+    
+    /**
+     * Type Description goes here
+     */
+    private static String PROVIDER_TYPE_DESC = "";
+    private static String PLAN_TYPE_DESC = "";
+    private static String YESNO_INTENT_QUES_TYPE = "";
+    
+    
+    
+    /**
+     * Plain or SSML text for VUI and Card
+     */
+    private static final String ADDRESS_ERROR_TEXT = "There was an error with the requested device address";
+    
+    private static final String DEVICE_ADDRESS_SEARCH = "Search continued with your Device address, ";
+    
+    private static final String MILES_AROUND = "Please tell me the radius of your search <prosody rate=\"medium\"> in miles </prosody>";
+    
+    private static final String MANUAL_ADDRESS_INPUT_TEXT = "User can search now with manual address input. <s> You can tell me your postal code</s> <break time=\"0.1s\" /> <s>For Example, my postal code is <say-as interpret-as=\"digits\"> 90125 </say-as> </s>";
+    
+    private static final String TRICARE_PLAN_TYPE_TEXT = "You can now, tell me your <prosody rate=\"slow\"> Tricare Plan type </prosody> which you belongs to <s> For example Tricare Prime, Tricare Prime Remote </s>";
+    
+    private static final String PROVIDER_DETAILS_INPUT_TEXT = "Please share the details of the provider such as provider name, gender and speciality which you are looking for.";    
+    
+    private static final String PROVIDER_DETAILS_REPROMT_TEXT = "<prosody rate=\"medium\"> <s> You can ask for provider filter to add information.</s> <break time=\"0.1s\" /> <s>In that case, you dont want to add any specific"
+    		+ "filter just say skip or don't know </s> <break time=\"0.1s\" /> <s> Kindly note, if you skip the filter, it would search for all the possibilites </s> </prosody>";
+    
+    /**
+     * Card Title
      */
     private static final String ADDRESS_CARD_TITLE = "Device Address";
     
-    /**
-     * The key to get the item from the intent.
-     */
-    private static final String ADDRESS_DECIDER_SLOT = "addressDeciderSlot";
-
     /**
      * The permissions that this skill relies on for retrieving addresses. If the consent token isn't
      * available or invalid, we will request the user to grant us the following permission
@@ -56,10 +112,6 @@ public class ProviderSearchSpeechlet implements SpeechletV2 {
      * Be sure to check your permissions settings for your skill on https://developer.amazon.com/
      */
     private static final String ALL_ADDRESS_PERMISSION = "read::alexa:device:all:address";
-
-    private static final String ADDRESS_ERROR_TEXT = "There was an error with the requested device address.";
-    
-    private static final String MANUAL_ADDRESS_INPUT_TEXT = "User can search now with manual address input. You can tell me your postal code";
     
 	@Override
 	public SpeechletResponse onIntent(SpeechletRequestEnvelope<IntentRequest> speechletRequestEnvelope){
@@ -72,47 +124,79 @@ public class ProviderSearchSpeechlet implements SpeechletV2 {
 
 		Intent intent = request.getIntent();
 		String intentName = intent.getName();
-
+		//Get Dialog State
+        
 		log.info("Intent received: {}", intentName);
 
 		if ("GetProviderSearchIntent".equals(intentName)) {
 			
-			return getProviderTypeLoadRequest(session);
+			session.setAttribute(GENERIC_INTENT_FLAG, "TRUE");
+			return getDialogDirective(speechletRequestEnvelope);
 		} else if ("GetProviderPhyIntent".equals(intentName)) {
+			
+			///// --------------------  Setting Session Values started ----------------- //////
+			session.setAttribute(PROVIDER_TYPE_SLOT, "P");
+			session.setAttribute(PROVIDER_TYPE_DESC, "Physician");
+			///// --------------------  Setting Session Values ended ----------------- //////
 			
 			return getProviderPhysicianRequest(speechletRequestEnvelope);
 		} else if ("DecideAddressIntent".equals(intentName)) {
-			Slot addressDeciderSlot = intent.getSlot(ADDRESS_DECIDER_SLOT);
 			
-			if (addressDeciderSlot != null && addressDeciderSlot.getValue() != null) {
-	            String addressDeciderValue = addressDeciderSlot.getValue();
-	            List<Resolution> addressResolution =  addressDeciderSlot.getResolutions().getResolutionsPerAuthority();
-	            String slotId = addressResolution.get(0).getValueWrappers().get(0).getValue().getId();		
-	            // Create the plain text output.
-				String speechOutput = "Address acknowledgement Intent requested with Slot ID , "+slotId;
-				return SpeechletResponse.newTellResponse(getPlainTextOutputSpeech(speechOutput));
+			return getDecideAddressRequest(intent);
+		} else if ("GetManualAddressInput".equals(intentName)) {
+			
+			return getDialogDirective(speechletRequestEnvelope);
+		} else if ("GetMilesIntent".equals(intentName)) {
+			
+			return getDialogDirective(speechletRequestEnvelope);
+		} else if("GetTricarePlanIntent".equals(intentName)) {
+			
+			return getDialogDirective(speechletRequestEnvelope);
+		} else if("GetProviderFilterIntent".equals(intentName)) {
+			
+			return getDialogDirective(speechletRequestEnvelope);
+		} else if("AMAZON.YesIntent".equals(intentName)) {
+			
+			//Getting YESNO question type
+			String yesNoQuesType = (String)session.getAttribute(YESNO_INTENT_QUES_TYPE);
+			
+			if(yesNoQuesType != null && !yesNoQuesType.trim().equals("")) {
+				
+				switch(yesNoQuesType) {
+					case PROVIDER_DETAILS_YESNO_QUES:
+						
+						///// --------------------  Setting Session Values started ----------------- //////
+						session.setAttribute(YESNO_INTENT_QUES_TYPE, "");
+						///// --------------------  Setting Session Values ended ----------------- //////
+						
+						return SpeechletResponse.newAskResponse(getSSMLOutputSpeech(PROVIDER_DETAILS_INPUT_TEXT+PROVIDER_DETAILS_REPROMT_TEXT), getReprompt(getSSMLOutputSpeech(PROVIDER_DETAILS_REPROMT_TEXT)), getSimpleCard("Provider Details Filter - Input", "Filter to get provider details"));
+					default:
+						//Intent Mapping Error Message
+						return SpeechletResponse.newTellResponse(getPlainTextOutputSpeech(GENERIC_INTENT_MAPPING_ERROR));
+				}
+				
 			}else {
-				// Create the plain text output.
-				String speechOutput = "Address decider is not working properly";
-				return SpeechletResponse.newTellResponse(getPlainTextOutputSpeech(speechOutput));
+				//Intent Mapping Error Message
+				return SpeechletResponse.newTellResponse(getPlainTextOutputSpeech(GENERIC_INTENT_MAPPING_ERROR));
 			}
 			
-		} /*else if ("GetAppointementStatusIntent".equals(intentName)) {
 			
-			return handlePrescriptionRefillRequest(session);
-		} */else if ("AMAZON.HelpIntent".equals(intentName)) {
-
+		} else if ("AMAZON.HelpIntent".equals(intentName)) {
+			
 			// Create the plain text output.
 			String speechOutput = "Welcome to the Walgreens Rx, What information you want from your walgreens account?";
 			return SpeechletResponse.newTellResponse(getPlainTextOutputSpeech(speechOutput));
 		} else if ("AMAZON.StopIntent".equals(intentName)) {
+			
 			//Stop Intent message
 			return SpeechletResponse.newTellResponse(getPlainTextOutputSpeech("Goodbye"));
 		} else if ("AMAZON.CancelIntent".equals(intentName)) {
+			
 			//Cancel Intent Message
 			return SpeechletResponse.newTellResponse(getPlainTextOutputSpeech("Goodbye"));
 		} else {
-			return SpeechletResponse.newTellResponse(getPlainTextOutputSpeech("Invalid Intent Requested"));
+			
+			return SpeechletResponse.newTellResponse(getPlainTextOutputSpeech(GENERIC_INTENT_NOT_FOUND_ERROR));
 		}
 	}
 
@@ -163,14 +247,13 @@ public class ProviderSearchSpeechlet implements SpeechletV2 {
     }
 
 	/**
-	 * Function to handle the onLaunch skill behavior.
-	 * 
-	 * @return SpeechletResponse object with voice/card response to return to the user
+	 * Welcome voice text
+	 * @return SpeechletResponse
 	 */
 	private SpeechletResponse getWelcomeResponse() {
 
 		StringBuilder speechText = new StringBuilder ("Welcome to Centene's Provider Search, How can I help you? ");
-		speechText.append("You can ask for Search Provider or Appointment Status.");
+		speechText.append("You can ask, Search for Specific Provider Type or Appointment Status. For Example, Search for physicians, find nearby hospitals, practitioner, hospitals, clinics and so on.");
 
 		SimpleCard card = getSimpleCard("Centene's Practitioner Search", speechText.toString());
 
@@ -180,9 +263,9 @@ public class ProviderSearchSpeechlet implements SpeechletV2 {
 	}
 	
 	/**
-	 * Function to handle the onLaunch skill behavior.
-	 * 
-	 * @return SpeechletResponse object with voice/card response to return to the user
+	 * Function to handle the Specific Provider Type - Physician Indent
+	 * @param requestEnvelope
+	 * @return SpeechletResponse
 	 */
 	private SpeechletResponse getProviderPhysicianRequest(SpeechletRequestEnvelope<IntentRequest> requestEnvelope) {
 
@@ -191,30 +274,232 @@ public class ProviderSearchSpeechlet implements SpeechletV2 {
 		return getRequestClientAddress(speechText, requestEnvelope, requestEnvelope.getSession());
 
 	}
-
+	
 	/**
-	 * Get the claim status for the user from his payer account and return the details in both
-	 * speech and SimpleCard format.
-	 * 
+	 * Function to decide the user to go for either Manual or Device address
 	 * @param intent
-	 *            the intent object which contains the date slot
-	 * @param session
-	 *            the session object
-	 * @return SpeechletResponse object with voice/card response to return to the user
+	 * @return SpeechletResponse
 	 */
-	private SpeechletResponse getProviderTypeLoadRequest(Session session) {
-
-		StringBuilder speechText = new StringBuilder ("Please tell me what kind of provider you want to search about? ");
-		speechText.append("You can ask for a Hospital or a Clinic or a Medical Practitioner.");
-
+	private SpeechletResponse getDecideAddressRequest(Intent intent) {
+		//Defaulted address to DEVICE_ADDRESS
+		String speechText = DEVICE_ADDRESS_SEARCH+MILES_AROUND;
+        SimpleCard card = getSimpleCard("Device Address - Search", speechText.toString());
+		Slot addressDeciderSlot = intent.getSlot(ADDRESS_DECIDER_SLOT);
+		if (addressDeciderSlot != null && addressDeciderSlot.getValue() != null) {
+            List<Resolution> addressResolution =  addressDeciderSlot.getResolutions().getResolutionsPerAuthority();
+            String slotId = addressResolution.get(0).getValueWrappers().get(0).getValue().getId();
+            log.info("Address acknowledgement Intent requested with Slot ID {}", slotId);
+            //MANUAL_ADDRESS
+            if(slotId != null && slotId.equals(MANUAL_ADDRESS)) {
+            	speechText = MANUAL_ADDRESS_INPUT_TEXT;
+            	card = getSimpleCard("Manual Address - Input", speechText.toString());
+            }
+		}			
+		return SpeechletResponse.newAskResponse(getSSMLOutputSpeech(speechText), getReprompt(getSSMLOutputSpeech(speechText)), card);
+	}
+	
+	/**
+	 * Dialog Directives to control the more conversational dialogs
+	 * @param speechletRequestEnvelope
+	 * @return SpeechletResponse
+	 */
+	private SpeechletResponse getDialogDirective(SpeechletRequestEnvelope<IntentRequest> speechletRequestEnvelope) {
 		
-		SimpleCard card = getSimpleCard("Provider Type Load", speechText.toString());
-
-        PlainTextOutputSpeech speech = getPlainTextOutputSpeech(speechText.toString());
+		IntentRequest request = speechletRequestEnvelope.getRequest();
+        Session session = speechletRequestEnvelope.getSession();
+		Intent intent = request.getIntent();
+		//Get Dialog State
+        DialogState dialogueState = request.getDialogState();
         
-		return SpeechletResponse.newAskResponse(speech, getReprompt(speech), card);
+		// If the IntentRequest dialog state is STARTED
+		// This is where you can pre-fill slot values with defaults
+		if (dialogueState == IntentRequest.DialogState.STARTED)
+		{
+			// 1.
+			DialogIntent dialogIntent = new DialogIntent(intent);
+
+			// 2.
+			DelegateDirective dd = new DelegateDirective();
+			dd.setUpdatedIntent(dialogIntent);
+
+			List<Directive> directiveList = new ArrayList<Directive>();
+			directiveList.add((Directive) dd);
+
+			SpeechletResponse speechletResp = new SpeechletResponse();
+			speechletResp.setDirectives((List<com.amazon.speech.speechlet.Directive>) directiveList);
+			// 3.
+			speechletResp.setShouldEndSession(false);
+			return speechletResp;
+		}
+		else if (dialogueState == IntentRequest.DialogState.COMPLETED)
+		{
+			if("GetManualAddressInput".equals(intent.getName())) {
+				Slot manualPinCode = intent.getSlot(PINCODE_SLOT);
+				if(manualPinCode != null && manualPinCode.getValue() != null) {
+					String pinCode = manualPinCode.getValue();
+					log.info("Entered Pincode is {}", pinCode); 
+					
+					///// --------------------  Setting Session Values started ----------------- //////
+					session.setAttribute(PINCODE_SLOT, pinCode);
+					///// --------------------  Setting Session Values ended ----------------- //////
+					
+					if("TRUE".equals(session.getAttribute(GENERIC_INTENT_FLAG))) {
+						SimpleCard card = getSimpleCard("Generic Intent - Tricare Plan Select", TRICARE_PLAN_TYPE_TEXT);
+			        	return SpeechletResponse.newAskResponse(getSSMLOutputSpeech(TRICARE_PLAN_TYPE_TEXT), getReprompt(getSSMLOutputSpeech(TRICARE_PLAN_TYPE_TEXT)), card);
+					}else {
+						SimpleCard card = getSimpleCard("Manual Address - Search", MILES_AROUND);
+						return SpeechletResponse.newAskResponse(getSSMLOutputSpeech(MILES_AROUND), getReprompt(getSSMLOutputSpeech(MILES_AROUND)), card);
+					}
+				}
+				return SpeechletResponse.newTellResponse(getPlainTextOutputSpeech(" Manual Address Input error, Please try again later "));
+			}
+			else if("GetTricarePlanIntent".equals(intent.getName())) {
+				Slot tricarePlanSlot = intent.getSlot(TRICARE_PLAN_SLOT);
+				if (tricarePlanSlot != null && tricarePlanSlot.getValue() != null) {
+					List<Resolution> tricarePlanResolution =  tricarePlanSlot.getResolutions().getResolutionsPerAuthority();
+					String slotId = tricarePlanResolution.get(0).getValueWrappers().get(0).getValue().getId();
+					log.info("Tricare Care Plan Type Slot Id : {}", slotId);
+					
+					///// --------------------  Setting Session Values started ----------------- //////
+					session.setAttribute(TRICARE_PLAN_SLOT, slotId);
+					session.setAttribute(PLAN_TYPE_DESC, tricarePlanSlot.getValue());
+					///// --------------------  Setting Session Values ended ----------------- //////
+					
+					StringBuilder speechText = new StringBuilder("<prosody rate=\"medium\">I'm saving you words as, you are belongs to "+ session.getAttribute(PLAN_TYPE_DESC)+", "); 
+					speechText.append(" and searching for "+ session.getAttribute(PROVIDER_TYPE_DESC) +", ");
+					speechText.append(" with postal code <say-as interpret-as=\"digits\"> "+session.getAttribute(PINCODE_SLOT)+"</say-as>, ");
+					speechText.append(" and search around "+ session.getAttribute(MILES_VALUE_SLOT));
+					speechText.append(" miles radius</prosody>");
+					
+					speechText.append("<break time=\"0.2s\" />Do you want to add some more details about the searching provider ? ");
+					
+					///// --------------------  Setting Session Values started ----------------- //////
+					session.setAttribute(YESNO_INTENT_QUES_TYPE, PROVIDER_DETAILS_YESNO_QUES);
+					///// --------------------  Setting Session Values ended ----------------- //////
+					
+					
+					SimpleCard card = getSimpleCard("User Details - Acknowledgement", speechText.toString());
+					return SpeechletResponse.newAskResponse(getSSMLOutputSpeech(speechText.toString()), getReprompt(getSSMLOutputSpeech(speechText.toString())), card);
+				}			
+				return SpeechletResponse.newTellResponse(getPlainTextOutputSpeech(" Tricare Plan Input Select error, Please try again later "));
+			} 
+			else if("GetMilesIntent".equals(intent.getName())) {
+				
+				Slot milesValueSlot = intent.getSlot(MILES_VALUE_SLOT);
+				SimpleCard card = new SimpleCard();
+				if (milesValueSlot != null && milesValueSlot.getValue() != null) {
+					
+					String milesValue = milesValueSlot.getValue();
+					
+					///// --------------------  Setting Session Values started ----------------- //////
+					session.setAttribute(MILES_VALUE_SLOT, milesValue);
+					///// --------------------  Setting Session Values ended ----------------- //////
+					
+					log.info("Miles value : {}", milesValue);
+					card = getSimpleCard("Miles value - User value", "Search radius is changed as "+ milesValue+" miles as per user request ");
+				}			
+				return SpeechletResponse.newAskResponse(getSSMLOutputSpeech(TRICARE_PLAN_TYPE_TEXT), getReprompt(getSSMLOutputSpeech(TRICARE_PLAN_TYPE_TEXT)), card);
+			}
+			else if("GetProviderSearchIntent".equals(intent.getName())) {
+				
+				//Below 3 slots are mandatory to fill the Indent
+				Slot providerTypeSlot = intent.getSlot(PROVIDER_TYPE_SLOT);
+				Slot milesValueSlot = intent.getSlot(MILES_VALUE_SLOT);
+				Slot addressDeciderSlot = intent.getSlot(ADDRESS_DECIDER_SLOT);
+				
+				///// --------------------  Setting Session Values started ----------------- //////
+				String providerTypeId = providerTypeSlot.getResolutions().getResolutionsPerAuthority().get(0).getValueWrappers().get(0).getValue().getId();
+				session.setAttribute(PROVIDER_TYPE_SLOT, providerTypeId);
+				session.setAttribute(PROVIDER_TYPE_DESC, providerTypeSlot.getValue());
+				session.setAttribute(MILES_VALUE_SLOT, milesValueSlot.getValue());
+				///// --------------------  Setting Session Values ended ----------------- //////
+				
+				SimpleCard card = new SimpleCard();
+	            List<Resolution> addressResolution =  addressDeciderSlot.getResolutions().getResolutionsPerAuthority();
+	            String slotId = addressResolution.get(0).getValueWrappers().get(0).getValue().getId();
+	            log.info("Address acknowledgement Intent requested with Slot ID {}", slotId);
+	            //MANUAL_ADDRESS
+	            if(slotId != null && slotId.equals(MANUAL_ADDRESS)) {
+	            	card = getSimpleCard("Manual Address - Input", MANUAL_ADDRESS_INPUT_TEXT);
+	            	return SpeechletResponse.newAskResponse(getSSMLOutputSpeech(MANUAL_ADDRESS_INPUT_TEXT), getReprompt(getSSMLOutputSpeech(MANUAL_ADDRESS_INPUT_TEXT)), card);
+	            } else {
+	            	return getRequestClientAddress(new StringBuilder(), speechletRequestEnvelope, session);
+	            }
+			}
+			else if("GetProviderFilterIntent".equals(intent.getName())) {
+				
+				//Below 3 slots are mandatory to fill the Indent
+				Slot specilaityTypeSlot = intent.getSlot(SPECIALITY_TYPE_SLOT);
+				Slot genderTypeSlot = intent.getSlot(GENDER_TYPE_SLOT);
+				Slot firstNameSlot = intent.getSlot(FIRSTNAME_SLOT);
+				
+				///// --------------------  Setting Session Values started ----------------- //////
+				session.setAttribute(SPECIALITY_TYPE_SLOT, specilaityTypeSlot.getValue());
+				session.setAttribute(GENDER_TYPE_SLOT, genderTypeSlot.getValue());
+				session.setAttribute(FIRSTNAME_SLOT, firstNameSlot.getValue());
+				///// --------------------  Setting Session Values ended ----------------- //////
+				
+				StringBuilder speechText = new StringBuilder("<prosody rate=\"medium\">I have marked your provider filter as follows, <break time=\"0.2s\" /> ");
+				
+				int skipCount = 0;
+				
+				if(firstNameSlot.getValue() != null && !firstNameSlot.getValue().equals("ALL")) {
+					speechText.append(" First name "+session.getAttribute(FIRSTNAME_SLOT)+", ");
+				} else {
+					skipCount++;
+				}
+				
+				if(genderTypeSlot.getValue() != null && !genderTypeSlot.getValue().equals("ALL")) {
+					speechText.append(" Gender "+session.getAttribute(GENDER_TYPE_SLOT)+ ", ");
+				} else {
+					skipCount++;
+				}
+				
+				if(specilaityTypeSlot.getValue() != null && !specilaityTypeSlot.getValue().equals("ALL")) {
+					speechText.append(" Speciality "+session.getAttribute(SPECIALITY_TYPE_SLOT)+ ", ");
+				} else {
+					skipCount++;
+				}
+				
+				if(skipCount > 0 && skipCount < 3) {
+					speechText.append(" and you are skipped one or more filters ");
+				}else if(skipCount == 3){
+					speechText.append(" <s>You are skipped all the filters and you requested the search with all possibilites</s> ");
+				}
+				
+				speechText.append("</prosody>");
+				speechText.append("<break time=\"0.2s\" />Shall i begin the search? ");
+				
+				return SpeechletResponse.newAskResponse(getSSMLOutputSpeech(speechText.toString()), getReprompt(getSSMLOutputSpeech(speechText.toString())), getSimpleCard("Provider Filter Details", speechText.toString()));
+				
+			}
+			else {
+				//Invalid Intent Request Error
+				return SpeechletResponse.newTellResponse(getPlainTextOutputSpeech(GENERIC_INTENT_NOT_FOUND_ERROR));
+			}
+		}
+		else
+		{
+			//This is executed when the dialog is in state e.g. IN_PROGESS. If there is only one slot this shouldn't be called
+			DelegateDirective dd = new DelegateDirective();
+
+			List<Directive> directiveList = new ArrayList<Directive>();
+			directiveList.add((Directive) dd);
+
+			SpeechletResponse speechletResp = new SpeechletResponse();
+			speechletResp.setDirectives((List<com.amazon.speech.speechlet.Directive>) directiveList);
+			speechletResp.setShouldEndSession(false);
+			return speechletResp;
+		}
 	}
 
+	/**
+	 * Get Device Address with the requested device details
+	 * @param speechText
+	 * @param speechletRequestEnvelope
+	 * @param session
+	 * @return SpeechletResponse
+	 */
 	private SpeechletResponse getRequestClientAddress(StringBuilder speechText, SpeechletRequestEnvelope<IntentRequest> speechletRequestEnvelope, Session session) {
 		
 		Permissions permissions = session.getUser().getPermissions();
@@ -245,7 +530,7 @@ public class ProviderSearchSpeechlet implements SpeechletV2 {
                 return SpeechletResponse.newAskResponse(getPlainTextOutputSpeech(speechText.toString()), reprompt, card);
             }
 
-            return getAddressResponse(speechText, 
+            return getAddressResponse(session, speechText, 
                 addressObject.getAddressLine1(),
                 addressObject.getStateOrRegion(),
                 addressObject.getPostalCode());
@@ -266,28 +551,39 @@ public class ProviderSearchSpeechlet implements SpeechletV2 {
 	}
 	
 	/**
-     * Creates a {@code SpeechletResponse} for the GetAddress intent.
-     * @return SpeechletResponse spoken and visual response for the given intent
-     */
-    private SpeechletResponse getAddressResponse(StringBuilder speechText, String streetName, String state, String zipCode) {
+	 * Device address API call
+	 * @param session
+	 * @param speechText
+	 * @param streetName
+	 * @param state
+	 * @param zipCode
+	 * @return SpeechletResponse
+	 */
+    private SpeechletResponse getAddressResponse(Session session, StringBuilder speechText, String streetName, String state, String zipCode) {
     	
-        speechText.append("Your search address is defaulted with your device address as, " + streetName + " " + state + ", " + zipCode+".");
-        speechText.append("Do you want to proceed search with the device address?");
+        speechText.append("Your search address is defaulted with your device address as, " + streetName + " <break time=\"0.2s\" /> " + state + ",<break time=\"0.2s\" /> <say-as interpret-as=\"digits\">" + zipCode + "</say-as>.<break time=\"0.2s\" />");
         
-        SimpleCard card = getSimpleCard(ADDRESS_CARD_TITLE, speechText.toString());
+        ///// --------------------  Setting Session Values started ----------------- //////
+        session.setAttribute(PINCODE_SLOT, zipCode);
+        ///// --------------------  Setting Session Values ended ----------------- //////
+        
+        if("TRUE".equals(session.getAttribute(GENERIC_INTENT_FLAG))){
+        	SimpleCard card = getSimpleCard("Generic Intent - Tricare Plan Select", speechText.toString()+ TRICARE_PLAN_TYPE_TEXT);
+        	return SpeechletResponse.newAskResponse(getSSMLOutputSpeech(speechText.toString()+TRICARE_PLAN_TYPE_TEXT), getReprompt(getSSMLOutputSpeech(speechText.toString()+TRICARE_PLAN_TYPE_TEXT)), card);
+        } else {
+        	speechText.append("Shall i proceed the search with, device address or some other address?");
+        	SimpleCard card = getSimpleCard(ADDRESS_CARD_TITLE, speechText.toString());
+            String addressRepromt = "You can tell me, Shall i continue with, device address or some other address?";
 
-        String addressRepromt = "Do you want proceed the search with device address?";
-    	Reprompt reprompt = getReprompt(getPlainTextOutputSpeech(addressRepromt));
-    	
-        PlainTextOutputSpeech speech = getPlainTextOutputSpeech(speechText.toString());
-
-        return SpeechletResponse.newAskResponse(speech, reprompt, card);
+            return SpeechletResponse.newAskResponse(getSSMLOutputSpeech(speechText.toString()), getReprompt(getPlainTextOutputSpeech(addressRepromt)), card);
+        }
     }
 	
 	/**
-     * Creates a {@code SpeechletResponse} for permission requests.
-     * @return SpeechletResponse spoken and visual response for the given intent
-     */
+	 * Return the voice to the user about skill address access permission is not granted
+	 * @param speechText
+	 * @return SpeechletResponse
+	 */
     private SpeechletResponse getPermissionsResponse(StringBuilder speechText) {
         speechText.append("You have not given this skill permissions to access your device address. ");
         speechText.append("Please give this skill permissions to access your address.");
@@ -343,6 +639,18 @@ public class ProviderSearchSpeechlet implements SpeechletV2 {
         return speech;
     }
 
+    /**
+     * SSML language text build
+     * @param speechText
+     * @return SsmlOutputSpeech
+     */
+    private SsmlOutputSpeech getSSMLOutputSpeech(String speechText) {
+    	SsmlOutputSpeech speech = new SsmlOutputSpeech();
+    	speech.setSsml("<speak>" + speechText.toString() + "</speak>");
+    	
+    	return speech;
+    }
+    
     /**
      * Helper method that returns a reprompt object. This is used in Ask responses where you want
      * the user to be able to respond to your speech.
