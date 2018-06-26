@@ -2,6 +2,9 @@ D:\Pracse\src\main\java\com\providersearch\alexa\ProviderSearchSpeechletRequestS
 D:\Pracse\src\main\java\com\providersearch\alexa\exceptions\DeviceAddressClientException.java
 D:\Pracse\src\main\java\com\providersearch\alexa\exceptions\UnauthorizedException.java
 D:\Pracse\src\main\java\com\providersearch\alexa\exceptions\GeneralSpeechletException.java
+D:\Pracse\src\main\java\com\providersearch\alexa\SearchClient.java
 D:\Pracse\src\main\java\com\providersearch\alexa\Address.java
+D:\Pracse\src\main\java\com\providersearch\alexa\ProviderSearch.java
+D:\Pracse\src\main\java\com\providersearch\alexa\exceptions\SearchClientException.java
 D:\Pracse\src\main\java\com\providersearch\alexa\ProviderSearchSpeechlet.java
 D:\Pracse\src\main\java\com\providersearch\alexa\AlexaDeviceAddressClient.java

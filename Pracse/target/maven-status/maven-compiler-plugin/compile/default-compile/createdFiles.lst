@@ -1,7 +1,11 @@
+com\providersearch\alexa\SearchClient.class
+com\providersearch\alexa\exceptions\GeneralSpeechletException.class
+com\providersearch\alexa\exceptions\DeviceAddressClientException.class
+com\providersearch\alexa\Address.class
+com\providersearch\alexa\SearchClient$1.class
 com\providersearch\alexa\AlexaDeviceAddressClient.class
 com\providersearch\alexa\exceptions\UnauthorizedException.class
 com\providersearch\alexa\ProviderSearchSpeechlet.class
-com\providersearch\alexa\exceptions\GeneralSpeechletException.class
-com\providersearch\alexa\exceptions\DeviceAddressClientException.class
+com\providersearch\alexa\ProviderSearch.class
 com\providersearch\alexa\ProviderSearchSpeechletRequestStreamHandler.class
-com\providersearch\alexa\Address.class
+com\providersearch\alexa\exceptions\SearchClientException.class

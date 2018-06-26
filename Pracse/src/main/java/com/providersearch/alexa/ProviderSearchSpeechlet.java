@@ -1,10 +1,8 @@
 package com.providersearch.alexa;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -23,10 +21,10 @@ import com.amazon.speech.speechlet.Permissions;
 import com.amazon.speech.speechlet.Session;
 import com.amazon.speech.speechlet.SessionEndedRequest;
 import com.amazon.speech.speechlet.SessionStartedRequest;
+import com.amazon.speech.speechlet.SpeechletResponse;
 import com.amazon.speech.speechlet.SpeechletV2;
 import com.amazon.speech.speechlet.dialog.directives.DelegateDirective;
 import com.amazon.speech.speechlet.dialog.directives.DialogIntent;
-import com.amazon.speech.speechlet.SpeechletResponse;
 import com.amazon.speech.speechlet.interfaces.system.SystemInterface;
 import com.amazon.speech.speechlet.interfaces.system.SystemState;
 import com.amazon.speech.ui.AskForPermissionsConsentCard;
@@ -36,8 +34,8 @@ import com.amazon.speech.ui.Reprompt;
 import com.amazon.speech.ui.SimpleCard;
 import com.amazon.speech.ui.SsmlOutputSpeech;
 import com.providersearch.alexa.exceptions.DeviceAddressClientException;
+import com.providersearch.alexa.exceptions.SearchClientException;
 import com.providersearch.alexa.exceptions.UnauthorizedException;
-import com.providersearch.alexa.Address;
 
 
 public class ProviderSearchSpeechlet implements SpeechletV2 {
@@ -69,13 +67,10 @@ public class ProviderSearchSpeechlet implements SpeechletV2 {
     private static final String GENERIC_INTENT_NOT_FOUND_ERROR = "Requested response not found, Still I am learning with the new things, Please try again.";
     private static final String PROVIDER_DETAILS_YESNO_QUES = "PROVIDER_DETAILS_YESNO_QUES";
     private static final String MANUAL_ADDRESS = "MANUAL_ADDRESS";
-    
-    /**
-     * Type Description goes here
-     */
-    private static String PROVIDER_TYPE_DESC = "";
-    private static String PLAN_TYPE_DESC = "";
-    private static String YESNO_INTENT_QUES_TYPE = "";
+    private static final String PROVIDER_TYPE_DESC = "PROVIDER_TYPE_DESC";
+    private static final String PLAN_TYPE_DESC = "PLAN_TYPE_DESC";
+    private static final String YESNO_INTENT_QUES_TYPE = "YESNO_INTENT_QUES_TYPE";
+    private static final String SEARCH_YESNO_QUES = "SEARCH_YESNO_QUES";
     
     
     
@@ -92,10 +87,12 @@ public class ProviderSearchSpeechlet implements SpeechletV2 {
     
     private static final String TRICARE_PLAN_TYPE_TEXT = "You can now, tell me your <prosody rate=\"slow\"> Tricare Plan type </prosody> which you belongs to <s> For example Tricare Prime, Tricare Prime Remote </s>";
     
-    private static final String PROVIDER_DETAILS_INPUT_TEXT = "Please share the details of the provider such as provider name, gender and speciality which you are looking for.";    
+    private static final String PROVIDER_DETAILS_INPUT_TEXT = "<s>Please share the details of the provider such as provider name, gender and speciality.</s>";    
     
-    private static final String PROVIDER_DETAILS_REPROMT_TEXT = "<prosody rate=\"medium\"> <s> You can ask for provider filter to add information.</s> <break time=\"0.1s\" /> <s>In that case, you dont want to add any specific"
-    		+ "filter just say skip or don't know </s> <break time=\"0.1s\" /> <s> Kindly note, if you skip the filter, it would search for all the possibilites </s> </prosody>";
+    private static final String PROVIDER_DETAILS_REPROMT_TEXT = "<prosody rate=\"medium\"> <s> You can ask for provider filter to add information.</s> <break time=\"0.1s\" /> <s>In that case, you dont want to add any of the "
+    		+ "filter, just say skip or <break time=\"0.1s\" /> don't know </s> <break time=\"0.1s\" /> <s> Kindly note, if you skip the filter, it would search for all the possibility. </s> </prosody>";
+    
+    private static final String NO_SEARCH_TEXT = "<s>Thanks for using Centene's provider search, voice interface.</s> <s> Please come again.</s>";
     
     /**
      * Card Title
@@ -160,16 +157,29 @@ public class ProviderSearchSpeechlet implements SpeechletV2 {
 			//Getting YESNO question type
 			String yesNoQuesType = (String)session.getAttribute(YESNO_INTENT_QUES_TYPE);
 			
+			///// --------------------  Setting Session Values started ----------------- //////
+			session.setAttribute(YESNO_INTENT_QUES_TYPE, "");
+			///// --------------------  Setting Session Values ended ----------------- //////
+			
 			if(yesNoQuesType != null && !yesNoQuesType.trim().equals("")) {
 				
 				switch(yesNoQuesType) {
 					case PROVIDER_DETAILS_YESNO_QUES:
 						
-						///// --------------------  Setting Session Values started ----------------- //////
-						session.setAttribute(YESNO_INTENT_QUES_TYPE, "");
-						///// --------------------  Setting Session Values ended ----------------- //////
-						
 						return SpeechletResponse.newAskResponse(getSSMLOutputSpeech(PROVIDER_DETAILS_INPUT_TEXT+PROVIDER_DETAILS_REPROMT_TEXT), getReprompt(getSSMLOutputSpeech(PROVIDER_DETAILS_REPROMT_TEXT)), getSimpleCard("Provider Details Filter - Input", "Filter to get provider details"));
+					
+					case SEARCH_YESNO_QUES:
+						
+					try {
+						return getProviderSearch();
+					} catch (UnauthorizedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (SearchClientException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+						
 					default:
 						//Intent Mapping Error Message
 						return SpeechletResponse.newTellResponse(getPlainTextOutputSpeech(GENERIC_INTENT_MAPPING_ERROR));
@@ -179,12 +189,46 @@ public class ProviderSearchSpeechlet implements SpeechletV2 {
 				//Intent Mapping Error Message
 				return SpeechletResponse.newTellResponse(getPlainTextOutputSpeech(GENERIC_INTENT_MAPPING_ERROR));
 			}
+		} else if("AMAZON.NoIntent".equals(intentName)) {
 			
+			//Getting YESNO question type
+			String yesNoQuesType = (String)session.getAttribute(YESNO_INTENT_QUES_TYPE);
 			
+			///// --------------------  Setting Session Values started ----------------- //////
+			session.setAttribute(YESNO_INTENT_QUES_TYPE, "");
+			///// --------------------  Setting Session Values ended ----------------- //////
+			
+			if(yesNoQuesType != null && !yesNoQuesType.trim().equals("")) {
+				
+				switch(yesNoQuesType) {
+					case PROVIDER_DETAILS_YESNO_QUES:
+					
+						try {
+							return getProviderSearch();
+						} catch (UnauthorizedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (SearchClientException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						
+					case SEARCH_YESNO_QUES:
+						
+						return SpeechletResponse.newTellResponse(getSSMLOutputSpeech(NO_SEARCH_TEXT));
+					default:
+						//Intent Mapping Error Message
+						return SpeechletResponse.newTellResponse(getPlainTextOutputSpeech(GENERIC_INTENT_MAPPING_ERROR));
+				}
+				
+			}else {
+				//Intent Mapping Error Message
+				return SpeechletResponse.newTellResponse(getPlainTextOutputSpeech(GENERIC_INTENT_MAPPING_ERROR));
+			}
 		} else if ("AMAZON.HelpIntent".equals(intentName)) {
 			
 			// Create the plain text output.
-			String speechOutput = "Welcome to the Walgreens Rx, What information you want from your walgreens account?";
+			String speechOutput = "Welcome to the Centene Helpdesk, What kind of information you want?";
 			return SpeechletResponse.newTellResponse(getPlainTextOutputSpeech(speechOutput));
 		} else if ("AMAZON.StopIntent".equals(intentName)) {
 			
@@ -410,6 +454,7 @@ public class ProviderSearchSpeechlet implements SpeechletV2 {
 				///// --------------------  Setting Session Values started ----------------- //////
 				String providerTypeId = providerTypeSlot.getResolutions().getResolutionsPerAuthority().get(0).getValueWrappers().get(0).getValue().getId();
 				session.setAttribute(PROVIDER_TYPE_SLOT, providerTypeId);
+				log.info(" Provider Type Desc : {}", providerTypeSlot.getValue());
 				session.setAttribute(PROVIDER_TYPE_DESC, providerTypeSlot.getValue());
 				session.setAttribute(MILES_VALUE_SLOT, milesValueSlot.getValue());
 				///// --------------------  Setting Session Values ended ----------------- //////
@@ -428,14 +473,24 @@ public class ProviderSearchSpeechlet implements SpeechletV2 {
 			}
 			else if("GetProviderFilterIntent".equals(intent.getName())) {
 				
+				String genderId 	= "";
+				String specalityId 	= "";
+				
 				//Below 3 slots are mandatory to fill the Indent
 				Slot specilaityTypeSlot = intent.getSlot(SPECIALITY_TYPE_SLOT);
 				Slot genderTypeSlot = intent.getSlot(GENDER_TYPE_SLOT);
 				Slot firstNameSlot = intent.getSlot(FIRSTNAME_SLOT);
 				
+				if(genderTypeSlot != null && genderTypeSlot.getValue() != null) {
+					genderId = genderTypeSlot.getResolutions().getResolutionsPerAuthority().get(0).getValueWrappers().get(0).getValue().getId();
+				}
+				if(specilaityTypeSlot != null && specilaityTypeSlot.getValue() != null) {
+					specalityId = specilaityTypeSlot.getResolutions().getResolutionsPerAuthority().get(0).getValueWrappers().get(0).getValue().getId();
+				}
+				
 				///// --------------------  Setting Session Values started ----------------- //////
-				session.setAttribute(SPECIALITY_TYPE_SLOT, specilaityTypeSlot.getValue());
-				session.setAttribute(GENDER_TYPE_SLOT, genderTypeSlot.getValue());
+				session.setAttribute(SPECIALITY_TYPE_SLOT, specalityId.equals("ALL")?specalityId:specilaityTypeSlot.getValue());
+				session.setAttribute(GENDER_TYPE_SLOT, genderId.equals("ALL")?genderId:genderTypeSlot.getValue());
 				session.setAttribute(FIRSTNAME_SLOT, firstNameSlot.getValue());
 				///// --------------------  Setting Session Values ended ----------------- //////
 				
@@ -443,19 +498,19 @@ public class ProviderSearchSpeechlet implements SpeechletV2 {
 				
 				int skipCount = 0;
 				
-				if(firstNameSlot.getValue() != null && !firstNameSlot.getValue().equals("ALL")) {
+				if(firstNameSlot.getValue() != null && !("ALL").equals(firstNameSlot.getValue())) {
 					speechText.append(" First name "+session.getAttribute(FIRSTNAME_SLOT)+", ");
 				} else {
 					skipCount++;
 				}
 				
-				if(genderTypeSlot.getValue() != null && !genderTypeSlot.getValue().equals("ALL")) {
+				if(genderId != null && !("ALL").equals(genderId)) {
 					speechText.append(" Gender "+session.getAttribute(GENDER_TYPE_SLOT)+ ", ");
 				} else {
 					skipCount++;
 				}
 				
-				if(specilaityTypeSlot.getValue() != null && !specilaityTypeSlot.getValue().equals("ALL")) {
+				if(specalityId != null && !("ALL").equals(specalityId)) {
 					speechText.append(" Speciality "+session.getAttribute(SPECIALITY_TYPE_SLOT)+ ", ");
 				} else {
 					skipCount++;
@@ -469,6 +524,10 @@ public class ProviderSearchSpeechlet implements SpeechletV2 {
 				
 				speechText.append("</prosody>");
 				speechText.append("<break time=\"0.2s\" />Shall i begin the search? ");
+				
+				///// --------------------  Setting Session Values started ----------------- //////
+				session.setAttribute(YESNO_INTENT_QUES_TYPE, SEARCH_YESNO_QUES);
+				///// --------------------  Setting Session Values ended ----------------- //////
 				
 				return SpeechletResponse.newAskResponse(getSSMLOutputSpeech(speechText.toString()), getReprompt(getSSMLOutputSpeech(speechText.toString())), getSimpleCard("Provider Filter Details", speechText.toString()));
 				
@@ -577,6 +636,24 @@ public class ProviderSearchSpeechlet implements SpeechletV2 {
 
             return SpeechletResponse.newAskResponse(getSSMLOutputSpeech(speechText.toString()), getReprompt(getPlainTextOutputSpeech(addressRepromt)), card);
         }
+    }
+    
+    private SpeechletResponse getProviderSearch() throws UnauthorizedException, SearchClientException {
+    	
+    	StringBuilder speechText = new StringBuilder();
+    	
+    	//Setting search filters
+    	List<ProviderSearch> searchList = SearchClient.getProviderSearch();
+    	speechText.append("<s>I have found "+searchList.size()+" records for you.</s> <break time=\"0.1s\" /> ");
+    	
+    	if(searchList != null && searchList.size() > 0) {
+    		for(ProviderSearch provDetails : searchList) {
+    			log.info("provDetails {}",provDetails.getFirstName());
+    			speechText.append("<s>"+provDetails.getFirstName()+provDetails.getLastName()+" from "+provDetails.getAddress().getAddressLine1()+", "+provDetails.getAddress().getCity()+"</s><break time=\"0.1s\" />");
+    		}
+    	}
+    	
+    	return SpeechletResponse.newTellResponse(getSSMLOutputSpeech(speechText.toString()+NO_SEARCH_TEXT));
     }
 	
 	/**
