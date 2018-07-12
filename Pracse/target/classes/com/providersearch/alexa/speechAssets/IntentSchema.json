@@ -1,0 +1,748 @@
+{
+    "interactionModel": {
+        "languageModel": {
+            "invocationName": "provider search",
+            "intents": [
+                {
+                    "name": "AMAZON.CancelIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.HelpIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.StopIntent",
+                    "samples": [
+                        "close",
+                        "stop",
+                        "thank you",
+                        "thanks",
+                        "bye"
+                    ]
+                },
+                {
+                    "name": "GetProviderSearchIntent",
+                    "slots": [
+                        {
+                            "name": "providerType",
+                            "type": "PROVIDER_TYPE",
+                            "samples": [
+                                "doctor",
+                                "general physician",
+                                "hospital",
+                                "clinic",
+                                "medical practitioner",
+                                "physician"
+                            ]
+                        },
+                        {
+                            "name": "addressDecider",
+                            "type": "ADDRESS_DECIDER",
+                            "samples": [
+                                "other address",
+                                "default address",
+                                "search for alternate address",
+                                "some other address",
+                                "device address"
+                            ]
+                        },
+                        {
+                            "name": "milesValue",
+                            "type": "AMAZON.NUMBER",
+                            "samples": [
+                                "{milesValue} miles"
+                            ]
+                        }
+                    ],
+                    "samples": [
+                        "search around {milesValue} miles",
+                        "search for {providerType} around {milesValue} miles radius",
+                        "find nearby {providerType}",
+                        "get me a {providerType}",
+                        "search for {providerType}",
+                        "locate {providerType} with {addressDecider} around {milesValue} miles",
+                        "get me a {providerType} with {addressDecider} around {milesValue} miles",
+                        "find nearby {providerType} with {addressDecider} around {milesValue} miles",
+                        "search for {providerType} with {addressDecider} around {milesValue} miles"
+                    ]
+                },
+                {
+                    "name": "GetProviderPhyIntent",
+                    "slots": [],
+                    "samples": [
+                        "physician",
+                        "practitioner",
+                        "medical practitioner",
+                        "general physician",
+                        "doctor"
+                    ]
+                },
+                {
+                    "name": "GetProviderHospitalIntent",
+                    "slots": [],
+                    "samples": [
+                        "hospital"
+                    ]
+                },
+                {
+                    "name": "GetProviderClinicIntent",
+                    "slots": [],
+                    "samples": [
+                        "urgent care clinics",
+                        "clinic"
+                    ]
+                },
+                {
+                    "name": "GetAppointementStatusIntent",
+                    "slots": [],
+                    "samples": [
+                        "tell me about my appointment status",
+                        "what is the status of my appointment",
+                        "status of my last appointment",
+                        "appointment status"
+                    ]
+                },
+                {
+                    "name": "DecideAddressIntent",
+                    "slots": [
+                        {
+                            "name": "addressDecider",
+                            "type": "ADDRESS_DECIDER"
+                        }
+                    ],
+                    "samples": [
+                        "{addressDecider}"
+                    ]
+                },
+                {
+                    "name": "GetManualAddressInput",
+                    "slots": [
+                        {
+                            "name": "manualPincode",
+                            "type": "AMAZON.NUMBER",
+                            "samples": [
+                                "{manualPincode}"
+                            ]
+                        }
+                    ],
+                    "samples": [
+                        "my postal code is {manualPincode}",
+                        "my pincode is {manualPincode} "
+                    ]
+                },
+                {
+                    "name": "GetMilesIntent",
+                    "slots": [
+                        {
+                            "name": "milesValue",
+                            "type": "AMAZON.NUMBER",
+                            "samples": [
+                                "{milesValue} miles",
+                                "{milesValue} mile"
+                            ]
+                        }
+                    ],
+                    "samples": [
+                        "{milesValue} mile",
+                        "{milesValue} miles"
+                    ]
+                },
+                {
+                    "name": "GetTricarePlanIntent",
+                    "slots": [
+                        {
+                            "name": "tricarePlan",
+                            "type": "TRICARE_PLANS",
+                            "samples": [
+                                "I opted for {tricarePlan}",
+                                "I have subscribed for {tricarePlan}",
+                                "my plan is {tricarePlan}",
+                                "i have {tricarePlan}",
+                                "i own {tricarePlan}",
+                                "i belong to {tricarePlan}",
+                                "{tricarePlan}"
+                            ]
+                        }
+                    ],
+                    "samples": [
+                        "i have {tricarePlan}",
+                        "i own {tricarePlan}",
+                        "my plan is {tricarePlan}",
+                        "i belongs to {tricarePlan}",
+                        "{tricarePlan}"
+                    ]
+                },
+                {
+                    "name": "AMAZON.YesIntent",
+                    "samples": [
+                        "yes i want to",
+                        "yes please",
+                        "ya",
+                        "yeah",
+                        "yep",
+                        "yes"
+                    ]
+                },
+                {
+                    "name": "AMAZON.NoIntent",
+                    "samples": [
+                        "no thanks",
+                        "nope",
+                        "no"
+                    ]
+                },
+                {
+                    "name": "GetProviderFilterIntent",
+                    "slots": [
+                        {
+                            "name": "firstName",
+                            "type": "AMAZON.FirstName",
+                            "samples": [
+                                "search for {firstName}",
+                                "find out {firstName}",
+                                "{firstName}"
+                            ]
+                        },
+                        {
+                            "name": "genderType",
+                            "type": "GENDER_TYPE",
+                            "samples": [
+                                "search for {genderType}",
+                                "{genderType}"
+                            ]
+                        },
+                        {
+                            "name": "specialityType",
+                            "type": "SPECIALITY_TYPE",
+                            "samples": [
+                                "search for {specialityType}",
+                                "speciality type is {specialityType}",
+                                "{specialityType}"
+                            ]
+                        }
+                    ],
+                    "samples": [
+                        "add information",
+                        "add filter",
+                        "add information to the provider filter",
+                        "provider filter"
+                    ]
+                }
+            ],
+            "types": [
+                {
+                    "name": "ADDRESS_DECIDER",
+                    "values": [
+                        {
+                            "id": "MANUAL_ADDRESS",
+                            "name": {
+                                "value": "manual address",
+                                "synonyms": [
+                                    "search with manual address",
+                                    "manual",
+                                    "alternate address",
+                                    "search for some other address",
+                                    "other address",
+                                    "search for alternate address"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "DEVICE_ADDRESS",
+                            "name": {
+                                "value": "device address",
+                                "synonyms": [
+                                    "device",
+                                    "default address",
+                                    "continue with device address"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "TRICARE_PLANS",
+                    "values": [
+                        {
+                            "id": "TS",
+                            "name": {
+                                "value": "Tricare Select"
+                            }
+                        },
+                        {
+                            "id": "TPR",
+                            "name": {
+                                "value": "Tricare Prime Remote"
+                            }
+                        },
+                        {
+                            "id": "TP",
+                            "name": {
+                                "value": "Tricare Prime"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "PROVIDER_TYPE",
+                    "values": [
+                        {
+                            "id": "H",
+                            "name": {
+                                "value": "hospitals"
+                            }
+                        },
+                        {
+                            "id": "C",
+                            "name": {
+                                "value": "clinics"
+                            }
+                        },
+                        {
+                            "id": "P",
+                            "name": {
+                                "value": "physician",
+                                "synonyms": [
+                                    "general physicians",
+                                    "practitioners",
+                                    "doctor",
+                                    "medical practitioner"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "GENDER_TYPE",
+                    "values": [
+                        {
+                            "id": "ALL",
+                            "name": {
+                                "value": "ALL",
+                                "synonyms": [
+                                    "please skip",
+                                    "don't know",
+                                    "skip filter",
+                                    "skip that one",
+                                    "skip"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "T",
+                            "name": {
+                                "value": "TRANSGENDER"
+                            }
+                        },
+                        {
+                            "id": "F",
+                            "name": {
+                                "value": "FEMALE"
+                            }
+                        },
+                        {
+                            "id": "M",
+                            "name": {
+                                "value": "MALE"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "SPECIALITY_TYPE",
+                    "values": [
+                        {
+                            "id": "ALL",
+                            "name": {
+                                "value": "ALL",
+                                "synonyms": [
+                                    "please skip",
+                                    "search with all",
+                                    "skip filter",
+                                    "skip that one",
+                                    "skip",
+                                    "don't know"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "NU",
+                            "name": {
+                                "value": "Neurology"
+                            }
+                        },
+                        {
+                            "id": "AN",
+                            "name": {
+                                "value": "Anaesthesiology"
+                            }
+                        },
+                        {
+                            "id": "DN",
+                            "name": {
+                                "value": "Dentistry"
+                            }
+                        },
+                        {
+                            "id": "OP",
+                            "name": {
+                                "value": "Ophthalmology"
+                            }
+                        },
+                        {
+                            "id": "CAR",
+                            "name": {
+                                "value": "Cardiology"
+                            }
+                        },
+                        {
+                            "id": "PAE",
+                            "name": {
+                                "value": "Paediatrics"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "AMAZON.FirstName",
+                    "values": [
+                        {
+                            "id": "ALL",
+                            "name": {
+                                "value": "ALL",
+                                "synonyms": [
+                                    "please skip",
+                                    "skip that one",
+                                    "don't know",
+                                    "i don't know",
+                                    "skip the filter",
+                                    "skip"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        "dialog": {
+            "intents": [
+                {
+                    "name": "DecideAddressIntent",
+                    "confirmationRequired": false,
+                    "prompts": {},
+                    "slots": [
+                        {
+                            "name": "addressDecider",
+                            "type": "ADDRESS_DECIDER",
+                            "confirmationRequired": false,
+                            "elicitationRequired": false,
+                            "prompts": {}
+                        }
+                    ]
+                },
+                {
+                    "name": "GetManualAddressInput",
+                    "confirmationRequired": false,
+                    "prompts": {},
+                    "slots": [
+                        {
+                            "name": "manualPincode",
+                            "type": "AMAZON.NUMBER",
+                            "confirmationRequired": true,
+                            "elicitationRequired": true,
+                            "prompts": {
+                                "confirmation": "Confirm.Slot.992482714857.889334120607",
+                                "elicitation": "Elicit.Slot.992482714857.889334120607"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "GetTricarePlanIntent",
+                    "confirmationRequired": false,
+                    "prompts": {},
+                    "slots": [
+                        {
+                            "name": "tricarePlan",
+                            "type": "TRICARE_PLANS",
+                            "confirmationRequired": true,
+                            "elicitationRequired": true,
+                            "prompts": {
+                                "confirmation": "Confirm.Slot.174860003919.1199613472749",
+                                "elicitation": "Elicit.Slot.174860003919.1199613472749"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "GetProviderSearchIntent",
+                    "confirmationRequired": false,
+                    "prompts": {},
+                    "slots": [
+                        {
+                            "name": "providerType",
+                            "type": "PROVIDER_TYPE",
+                            "confirmationRequired": false,
+                            "elicitationRequired": true,
+                            "prompts": {
+                                "elicitation": "Elicit.Slot.318758993980.1169751231124"
+                            }
+                        },
+                        {
+                            "name": "addressDecider",
+                            "type": "ADDRESS_DECIDER",
+                            "confirmationRequired": false,
+                            "elicitationRequired": true,
+                            "prompts": {
+                                "elicitation": "Elicit.Slot.318758993980.66994683615"
+                            }
+                        },
+                        {
+                            "name": "milesValue",
+                            "type": "AMAZON.NUMBER",
+                            "confirmationRequired": false,
+                            "elicitationRequired": true,
+                            "prompts": {
+                                "elicitation": "Elicit.Slot.318758993980.277031178143"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "GetMilesIntent",
+                    "confirmationRequired": false,
+                    "prompts": {},
+                    "slots": [
+                        {
+                            "name": "milesValue",
+                            "type": "AMAZON.NUMBER",
+                            "confirmationRequired": false,
+                            "elicitationRequired": true,
+                            "prompts": {
+                                "elicitation": "Elicit.Slot.406920007215.884458569306"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "GetProviderFilterIntent",
+                    "confirmationRequired": false,
+                    "prompts": {},
+                    "slots": [
+                        {
+                            "name": "firstName",
+                            "type": "AMAZON.FirstName",
+                            "confirmationRequired": false,
+                            "elicitationRequired": true,
+                            "prompts": {
+                                "elicitation": "Elicit.Slot.1456298264553.107289791806"
+                            }
+                        },
+                        {
+                            "name": "genderType",
+                            "type": "GENDER_TYPE",
+                            "confirmationRequired": false,
+                            "elicitationRequired": true,
+                            "prompts": {
+                                "elicitation": "Elicit.Slot.1456298264553.481138618439"
+                            }
+                        },
+                        {
+                            "name": "specialityType",
+                            "type": "SPECIALITY_TYPE",
+                            "confirmationRequired": false,
+                            "elicitationRequired": true,
+                            "prompts": {
+                                "elicitation": "Elicit.Slot.1456298264553.911710341264"
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        "prompts": [
+            {
+                "id": "Elicit.Slot.995246435150.1166679865347",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "Shall i continue with device address?"
+                    }
+                ]
+            },
+            {
+                "id": "Elicit.Slot.992482714857.889334120607",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "Can you please provide your postal code?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "Can you please provide your ZIP code?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "Shall I get your ZIP code?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "Shall i get your postal code?"
+                    }
+                ]
+            },
+            {
+                "id": "Confirm.Slot.992482714857.889334120607",
+                "variations": [
+                    {
+                        "type": "SSML",
+                        "value": "<speak>You said your postal code is <prosody rate=\"x-slow\"> <say-as interpret-as=\"digits\"> {manualPincode}  </say-as> </prosody>, right?</speak>"
+                    }
+                ]
+            },
+            {
+                "id": "Confirm.Slot.174860003919.1199613472749",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "You said that you belong to {tricarePlan} , right?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "You said, {tricarePlan} , right?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "I heard that you are in {tricarePlan} , right?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "I heard that you belong to {tricarePlan} , right?"
+                    }
+                ]
+            },
+            {
+                "id": "Elicit.Slot.174860003919.1199613472749",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "Please let me know your tricare plan type."
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "Shall I get the tricare plan type that you belong to?"
+                    }
+                ]
+            },
+            {
+                "id": "Elicit.Slot.318758993980.1169751231124",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "What kind of provider you want to search for?"
+                    }
+                ]
+            },
+            {
+                "id": "Elicit.Slot.318758993980.66994683615",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "Shall i proceed the search with device address or some other address?"
+                    }
+                ]
+            },
+            {
+                "id": "Elicit.Slot.318758993980.277031178143",
+                "variations": [
+                    {
+                        "type": "SSML",
+                        "value": "<speak>Please tell me the radius of your search <prosody rate=\"medium\"> in miles </prosody></speak>"
+                    }
+                ]
+            },
+            {
+                "id": "Elicit.Slot.406920007215.884458569306",
+                "variations": [
+                    {
+                        "type": "SSML",
+                        "value": "<speak>Can I get the radius of your search <prosody rate=\"medium\"> in miles </prosody></speak>"
+                    },
+                    {
+                        "type": "SSML",
+                        "value": "<speak>Please tell me the radius of your search <prosody rate=\"medium\"> in miles </prosody></speak>"
+                    }
+                ]
+            },
+            {
+                "id": "Elicit.Slot.1456298264553.107289791806",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "Could you please let me know the firstname of the provider?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "Shall i get the firstname of the provider?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "Please tell me the firstname of the provider."
+                    }
+                ]
+            },
+            {
+                "id": "Confirm.Slot.1456298264553.107289791806",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "I have heard the provider name is {firstName} , are you sure?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "You said, the provider name is {firstName} , right?"
+                    }
+                ]
+            },
+            {
+                "id": "Elicit.Slot.1456298264553.481138618439",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "Shall i know the gender of the provider?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "Can i get the gender of the provider?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "Please let me know the gender of the provider."
+                    }
+                ]
+            },
+            {
+                "id": "Elicit.Slot.1456298264553.911710341264",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "Can you please share me the speciality type?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "Shall i get your specialty type?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "Tell me which speciality you are looking for."
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "Please let me know the speciality you want to search for."
+                    }
+                ]
+            }
+        ]
+    }
+}
